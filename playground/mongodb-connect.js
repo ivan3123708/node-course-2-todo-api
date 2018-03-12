@@ -10,7 +10,7 @@ MongoClient.connect('mongodb://localhost:27017/todoApp', (err, client) => {
   const db = client.db('todoApp');
 
   db.collection('Todos').insertOne({
-    text: 'Something to do',
+    text: 'Kill some gypsies',
     completed: false
   }, (err, result) => {
     if (err) {
@@ -21,16 +21,16 @@ MongoClient.connect('mongodb://localhost:27017/todoApp', (err, client) => {
   });
 
   db.collection('Users').insertOne({
-    name: 'Ivan',
-    age: 27,
-    location: 'Belgrade'
-  }, (err, result) => {
-    if (err) {
-      console.log(err);
-    }
+      name: 'Adolf',
+      age: 27,
+      location: 'Belgrade'
+    }, (err, result) => {
+      if (err) {
+        console.log(err);
+      }
 
-    console.log(JSON.stringify(result.ops, null, 2));
-  })
-
+      console.log(JSON.stringify(result.ops, null, 2));
+    });
+  
   client.close();
 });
