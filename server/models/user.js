@@ -58,6 +58,18 @@ userSchema.methods.generateAuthToken = function() {
     });
 };
 
+userSchema.methods.removeToken = function(token) {
+  const user = this;
+
+  return user.update({
+    $pull: {
+      tokens: {
+        token: token
+      }
+    }
+  });
+};
+
 userSchema.statics.findByToken = function(token) {
   const User = this;
   let decoded;
@@ -75,6 +87,27 @@ userSchema.statics.findByToken = function(token) {
     'tokens.token': token,
     'tokens.access': 'auth'
   });
+};
+
+userSchema.statics.findByCredentials = function(email, password) {
+  const User = this;
+
+  return User.findOne({ email })
+    .then((foundUser) => {
+      if (foundUser) {
+        return new Promise((resolve, reject) => {
+          bcrypt.compare(password, foundUser.password, (err, res) => {
+            if (res) {
+              resolve(foundUser);
+            } else {
+              reject();
+            }
+          });
+        })
+      } else {
+        return Promise.reject();
+      }
+    });
 };
 
 userSchema.pre('save', function(next) {
