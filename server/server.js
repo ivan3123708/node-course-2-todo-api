@@ -12,17 +12,19 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-app.get('/todos', (req, res) => {
-  Todo.find().then((foundTodos) => {
-    res.send({ todos: foundTodos })
-  }, (err) => {
-    res.status(400).send(err);
-  });
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({ _creator: req.user._id })
+    .then((foundTodos) => {
+      res.send({ todos: foundTodos })
+    }, (err) => {
+      res.status(400).send(err);
+    });
 });
 
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
   const todo = new Todo({
     text: req.body.text,
+    _creator: req.user._id
   })
     .save()
     .then((savedTodo) => {
@@ -32,14 +34,17 @@ app.post('/todos', (req, res) => {
     });
 });
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   const id = req.params.id;
   
   if (!ObjectId.isValid(id)) {
     return res.status(404).send();
   }
 
-  Todo.findById(id)
+  Todo.findOne({
+    _creator: req.user._id,
+    _id: id
+  })
     .then((foundTodo) => {
       if (foundTodo) {
         res.send({ todo: foundTodo });
@@ -59,7 +64,10 @@ app.delete('/todos/:id', (req, res) => {
     return res.status(404).send();
   }
 
-  Todo.findByIdAndRemove(id)
+  Todo.findOneAndRemove({
+    _creator: req.user._id,
+    _id: id
+  })
     .then((removedTodo) => {
       if (removedTodo) {
         res.send({ todo: removedTodo });
@@ -72,7 +80,7 @@ app.delete('/todos/:id', (req, res) => {
     });
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   const id = req.params.id;
   const body = _.pick(req.body, ['text', 'completed']);
 
@@ -87,7 +95,12 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null;
   }
 
-  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+  Todo.findOneAndUpdate({
+    _creator: req.user._id,
+    _id: id
+  }, 
+  { $set: body }, 
+  { new: true })
     .then((patchedTodo) => {
       if (patchedTodo) {
         res.send({ todo: patchedTodo });
